@@ -1,0 +1,9 @@
+./lib/*
+./lib64/*
+./bin/*
+./crawler/*
+./deps/*
+./help/*
+./learn/*
+./build/*
+./.cache/*
