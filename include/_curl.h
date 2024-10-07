@@ -5,9 +5,11 @@
 #include <string>
 #include <vector>
 #include <utility>
-#include <curl/curl.h>
 #include <functional>
 
+#include <curl/curl.h>
+
+#include "_curlOptVal.h"
 #ifdef CURL_ERROR_ENABLE
 #include "_curl_error.h"
 #define NOEXCEPT noexcept(false)
@@ -16,30 +18,6 @@
 #endif
 
 namespace web {
-
-        // 枚举类型，用于标识数据类型
-        enum class KeyType
-        {
-            text,
-            image,
-            video
-        };
-
-
-        using curl_wr_callback = size_t(*)(char*,size_t,size_t,void*);
-
-        union OptionValue{
-            const char *_text;
-            int64_t _integer;
-            int _integer_;
-            curl_wr_callback _wr_callback;
-            void *_pointer;
-            OptionValue(const char *t):_text(t){}
-            OptionValue(long i):_integer(i){}
-            OptionValue(int i):_integer_(i){}
-            OptionValue(curl_wr_callback fn):_wr_callback(fn){}
-            OptionValue(void *p):_pointer(p){}
-        };
 
         using curl_option=std::vector<std::pair<CURLoption,OptionValue>>;
 

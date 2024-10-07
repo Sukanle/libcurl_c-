@@ -51,7 +51,7 @@ target_link_libraries(_curl CURL::libcurl)
 target_include_directories(_curl PUBLIC ${CMAKE_SOURCE_DIR}/include)
 set_target_properties(_curl PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${LIB_DIR_SHARED})
 
-file(GLOB CRAWLER ${CMAKE_SOURCE_DIR}/crawler.cpp)
+file(GLOB CRAWLER ${CMAKE_SOURCE_DIR}/test/crawler.cpp)
 
 add_executable(crawler ${CRAWLER})
 
