@@ -1,5 +1,6 @@
 #ifndef _CURL_MAKEFN_H
 #define _CURL_MAKEFN_H 1
+#include "_curl_error.h"
 #include "_curl.h"
 
 namespace web{

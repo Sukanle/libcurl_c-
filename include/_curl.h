@@ -9,13 +9,9 @@
 
 #include <curl/curl.h>
 
+#include "_curl_error_settings.h"
 #include "_curlOptVal.h"
-#ifdef CURL_ERROR_ENABLE
 #include "_curl_error.h"
-#define NOEXCEPT noexcept(false)
-#else
-#define NOEXCEPT noexcept(true)
-#endif
 
 namespace web {
 
@@ -28,8 +24,24 @@ namespace web {
         {
         private:
             CURL *_curl=nullptr;
+            static CURLcode _global_init;
 
         public:
+            static bool global_init() NOEXCEPT {
+#ifdef _WIN32
+            _global_init=curl_global_init(CURL_GLOBAL_WIN32);
+#else
+            _global_init=curl_global_init(CURL_GLOBAL_SSL);
+#endif
+#ifdef CURL_ERROR_ON
+            if(_global_init!=CURLE_OK)
+                CURL_ERROR(_global_init);
+#else
+            if(_global_init!=CURLE_OK)
+                return false;
+#endif
+            return true;
+            }
             curl_easy()noexcept;
             curl_easy(const curl_easy& obj)noexcept;
             curl_easy(curl_easy &&obj)noexcept;
@@ -47,7 +59,7 @@ namespace web {
              * */
             template<typename T>
             bool setOption(CURLoption &&option,T &&value) NOEXCEPT {
-#ifdef CURL_ERROR_ENABLE
+#ifdef CURL_ERROR_ON
                 CURLcode _error=curl_easy_setopt(_curl,
                         std::forward<CURLoption>(option),
                         std::forward<T>(value));
@@ -85,11 +97,18 @@ namespace web {
              * @param: option: 选项组，里面包含了选项和值
              * @note: 通过vector<pair<CURLoption,void*>>来设置,静态函数
              * */
-            static bool setOption(CURL *curl,const curl_option &option) noexcept {
+            static bool setOption(CURL *curl,const curl_option &option) NOEXCEPT {
+#ifdef CURL_ERROR_ON
                 CURLcode text;
+                for(const auto &i:option)
+                    if((text=curl_easy_setopt(curl,i.first,i.second))!=CURLE_OK)
+                        CURL_ERROR(text);
+#else
                 for(const auto &i:option)
                     if(curl_easy_setopt(curl,i.first,i.second)!=CURLE_OK)
                         return false;
+
+#endif
                 return true;
             }
 

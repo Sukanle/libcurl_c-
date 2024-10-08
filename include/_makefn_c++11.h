@@ -1,14 +1,11 @@
 #ifndef _MAKEFN_C11_H
 #define _MAKEFN_C11_H 1
 
-#ifdef CURL_ERROR_ENABLE
-#define NOEXCEPT noexcept(false)
-#else
-#define NOEXCEPT noexcept(true)
-#endif
-
 #include <memory>
 #include <functional>
+
+#include "_curl_error_settings.h"
+
 namespace make_fn{
     // 返回类型判断模板
     template<bool new_instance,typename T>

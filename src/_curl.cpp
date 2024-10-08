@@ -1,12 +1,11 @@
 #include "_curl.h"
 
 namespace web{
+    CURLcode curl_easy::_global_init=CURLE_FAILED_INIT; // 默认初始化失败
+
     curl_easy::curl_easy() noexcept{
-#ifdef _WIN32
-        curl_global_init(CURL_GLOBAL_WIN32);
-#else
-        curl_global_init(CURL_GLOBAL_SSL);
-#endif
+        if(_global_init!=CURLE_OK)
+            global_init();
         _curl=curl_easy_init();
     }
     curl_easy::curl_easy(const curl_easy& obj) noexcept{
@@ -18,7 +17,7 @@ namespace web{
     curl_easy::curl_easy(curl_easy &&obj) noexcept{
         if(this!=&obj)
         {
-            _curl=std::move(obj._curl);
+            _curl=obj._curl;
             obj._curl=nullptr;
         }
     }
@@ -38,7 +37,7 @@ namespace web{
     curl_easy& curl_easy::operator=(curl_easy&&obj) noexcept {
         if(this!=&obj)
         {
-            _curl=std::move(obj.getHandle());
+            _curl=obj._curl;
             obj._curl=nullptr;
         }
         return *this;

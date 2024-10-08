@@ -2,39 +2,49 @@
 #define _CURL_ERROR_H 1
 #include <curl/curl.h>
 #include <exception>
+#include <string>
 
+#ifdef CURL_ERROR_DETAILED
 #define CURL_ERROR(_error) \
-        throw idc::web::curl_error(_error);
+    throw web::curl_error(_error, __FILE__, __LINE__, __FUNCTION__);
+#else
+#define CURL_ERROR(_error) \
+        throw web::curl_error(_error);
+#endif
 
-namespace idc{
-    namespace web{
-        class curl_error:public std::exception
-        {
-        private:
-            const char *_error;
-        public:
-            curl_error(CURLcode errorcode):_error(curl_easy_strerror(errorcode)){}
-            curl_error(const curl_error &obj):_error(obj._error){}
-            curl_error(curl_error &&obj):_error(obj._error){obj._error=nullptr;}
-            curl_error& operator=(const curl_error&obj){
-                if(this!=&obj){
-                    _error=obj._error;
-                }
-                return *this;
-            }
-            curl_error& operator=(curl_error &&obj){
-                if(this!=&obj){
-                    _error=obj._error;
-                    obj._error=nullptr;
-                }
-                return *this;
-            }
-            ~curl_error() = default;
+#define FILE_LINE_FUNC(_file,_line,_func) _file+":"+std::to_string(_line)+"("+_func+"):"
 
-            const char* what() const noexcept{
-                return _error;
+namespace web{
+    // namespace error{
+    class curl_error:public std::exception
+    {
+    private:
+        std::string _error;
+
+    public:
+        curl_error()=delete;
+#ifdef CURL_ERROR_DETAILED
+        curl_error(CURLcode &errorcode, const std::string &file, int line, const std::string &func)noexcept :
+            _error(FILE_LINE_FUNC(file,line,func)+curl_easy_strerror(errorcode)){}
+#else
+        curl_error(CURLcode &errorcode)noexcept :_error(curl_easy_strerror(errorcode)){}
+#endif
+        curl_error(const curl_error&)=delete;
+        curl_error(curl_error&& obj)noexcept : _error(std::move(obj._error)){}
+        curl_error& operator=(const curl_error&)=delete;
+        curl_error& operator=(curl_error&& obj)noexcept {
+            if(this!=&obj){
+                _error=obj._error;
             }
-        };
-    } // namespace web
-} // namespace idc
+            return *this;
+        }
+
+        ~curl_error() noexcept override = default;
+
+        const char* what() const noexcept override{
+            return _error.c_str();
+        }
+    };
+    // } // namespace error
+} // namespace web
 #endif // _CURL_ERROR_H
