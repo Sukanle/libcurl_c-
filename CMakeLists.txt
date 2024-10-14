@@ -44,9 +44,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BIN_OUT})
 set(LIB_DIR_SHARED ${LIB_OUT}/shared)
 set(LIB_DIR_STATIC ${LIB_OUT}/static)
 
-file(GLOB SRC_CURL ${CMAKE_SOURCE_DIR}/src/_curl.cpp)
+# file(GLOB SRC_CURL_EASY ${CMAKE_SOURCE_DIR}/src/_curl_easy.cpp)
+# file(GLOB SRC_CURL_MULTI ${CMAKE_SOURCE_DIR}/src/_curl_multi.cpp)
 
-add_library(_curl SHARED ${SRC_CURL})
+add_library(_curl SHARED ./src/_curl_easy.cpp ./src/_curl_multi.cpp ./src/_curl_global.cpp)
 target_link_libraries(_curl CURL::libcurl)
 target_include_directories(_curl PUBLIC ${CMAKE_SOURCE_DIR}/include)
 set_target_properties(_curl PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${LIB_DIR_SHARED})

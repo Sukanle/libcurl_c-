@@ -1,7 +1,16 @@
+#pragma once
 #ifndef _CURL_MAKEFN_H
 #define _CURL_MAKEFN_H 1
-#include "_curl_error.h"
+#include <memory>
+#include <functional>
+
+#include "_curl_Macro_settings.h"
+
 #include "_curl.h"
+
+#ifdef _CURL_ERROR_ON
+#include "_curl_error.h"
+#endif
 
 namespace web{
 #if __cplusplus < 201703L
@@ -14,7 +23,7 @@ namespace web{
      * */
     template <bool new_instance=false>
     auto make_curl_easy() ->
-    typename make_fn::return_type<new_instance,curl_easy>::type{
+    NODISCARD typename make_fn::return_type<new_instance,curl_easy>::type{
         return make_fn::make_fn<new_instance,curl_easy>::make(nullptr);
     }
 
@@ -27,7 +36,7 @@ namespace web{
      * */
     template<bool new_instance>
     auto make_curl_easy(curl_option &options) NOEXCEPT ->
-    typename make_fn::return_type<new_instance,curl_easy>::type{
+    NODISCARD typename make_fn::return_type<new_instance,curl_easy>::type{
         //@attention: 必须使用std::function，如果使用auto自动推导，会导致make_fn内部判断对象是否为空时出错
         std::function<void(curl_easy&)> func = [&options](curl_easy& obj) {
             obj.setOption(options);
@@ -43,7 +52,7 @@ namespace web{
      * @return: 返回一个curl_easy对象,或者一个unique_ptr<curl_easy>对象
      * */
     template<bool new_instance=false,typename T,typename ...Args>
-    auto make_curl_easy(CURLoption &&option,T &&value,Args&& ...args) NOEXCEPT ->
+    NODISCARD auto make_curl_easy(CURLoption &&option,T &&value,Args&& ...args) NOEXCEPT ->
     typename make_fn::return_type<new_instance,curl_easy>::type{
         //@attention: 必须使用std::function，如果使用auto自动推导，会导致make_fn内部判断对象是否为空时出错
         std::function<void(curl_easy&)> func =[&option,&value,&args...](curl_easy& obj){

@@ -1,132 +1,52 @@
+#pragma once
 #ifndef __CURL_H
 #define __CURL_H 1
 
-#include <memory>
-#include <string>
+#if __cplusplus < 201103L
+#error "C++11 or later version is required"
+#endif
+
 #include <vector>
 #include <utility>
-#include <functional>
+#include <atomic>
+#include <string>
 
 #include <curl/curl.h>
 
-#include "_curl_error_settings.h"
+#include "_curl_Macro_settings.h"
 #include "_curlOptVal.h"
+
+#if defined CURL_ERROR_ENABLE
 #include "_curl_error.h"
+#elif defined CURL_ERROR_DETAILED
+#include "_curl_error.h"
+#endif
 
 namespace web {
 
-        using curl_option=std::vector<std::pair<CURLoption,OptionValue>>;
+    using curl_option=std::vector<std::pair<CURLoption,OptionValue>>;
+    using curlm_option=std::vector<std::pair<CURLMoption,OptionValue>>;
 
-        // curl_error类，用于处理、记录curl错误
-        class curl_error;
-        // curl_easy类,提供简单的curl_easy接口
-        class curl_easy
-        {
-        private:
-            CURL *_curl=nullptr;
-            static CURLcode _global_init;
+    extern CURLcode _global_init;
 
-        public:
-            static bool global_init() NOEXCEPT {
-#ifdef _WIN32
-            _global_init=curl_global_init(CURL_GLOBAL_WIN32);
-#else
-            _global_init=curl_global_init(CURL_GLOBAL_SSL);
-#endif
-#ifdef CURL_ERROR_ON
-            if(_global_init!=CURLE_OK)
-                CURL_ERROR(_global_init);
-#else
-            if(_global_init!=CURLE_OK)
-                return false;
-#endif
-            return true;
-            }
-            curl_easy()noexcept;
-            curl_easy(const curl_easy& obj)noexcept;
-            curl_easy(curl_easy &&obj)noexcept;
-
-            ~curl_easy()noexcept;
-
-            curl_easy& operator=(const curl_easy&obj)noexcept;
-            curl_easy& operator=(curl_easy&&obj)noexcept;
-
-            /*
-             * @brief: 提供设置一对curl_easy_setopt的选项和值
-             * @param: option: 选项
-             * @param: value: 选项值
-             * @note: 可直接通过CURLoption枚举类型来设置
-             * */
-            template<typename T>
-            bool setOption(CURLoption &&option,T &&value) NOEXCEPT {
-#ifdef CURL_ERROR_ON
-                CURLcode _error=curl_easy_setopt(_curl,
-                        std::forward<CURLoption>(option),
-                        std::forward<T>(value));
-                if(_error!=CURLE_OK)
-                    CURL_ERROR(_error);
-                return true;
-#else
-                return curl_easy_setopt(_curl,
-                        std::forward<CURLoption>(option),
-                        std::forward<T>(value))==CURLE_OK;
-#endif
-            }
-            /*
-             * @brief: 提供设置一组curl_easy_setopt的选项和值
-             * @param: option: 选项
-             * @param: value: 选项值
-             * @note: 可直接通过CURLoption枚举类型来设置,可变参数模板，递归调用
-             * */
-            template<typename T,typename ...Args>
-            bool setOption(CURLoption &&option,T &&value,Args&& ...args) NOEXCEPT {
-                return setOption(std::forward<CURLoption>(option),
-                        std::forward<T>(value)
-                        ) && setOption(std::forward<Args>(args)...);
-            }
-
-            /*
-             * @brief: 提供设置curl_easy_setopt的选项和值
-             * @param: option: 选项组，里面包含了选项和值
-             * @note: 通过vector<pair<CURLoption,void*>>来设置
-             * */
-            bool setOption(curl_option &option) NOEXCEPT;
-
-            /*
-             * @brief: 提供设置curl_easy_setopt的选项和值
-             * @param: option: 选项组，里面包含了选项和值
-             * @note: 通过vector<pair<CURLoption,void*>>来设置,静态函数
-             * */
-            static bool setOption(CURL *curl,const curl_option &option) NOEXCEPT {
-#ifdef CURL_ERROR_ON
-                CURLcode text;
-                for(const auto &i:option)
-                    if((text=curl_easy_setopt(curl,i.first,i.second))!=CURLE_OK)
-                        CURL_ERROR(text);
-#else
-                for(const auto &i:option)
-                    if(curl_easy_setopt(curl,i.first,i.second)!=CURLE_OK)
-                        return false;
-
-#endif
-                return true;
-            }
-
-            /*
-             * @brief: 执行curl_easy_perform
-             * @note: 执行成功返回true，否则返回false
-             * */
-            bool perform() NOEXCEPT;
-
-            /*
-             * @brief: 获取curl_easy的句柄
-             * */
-            CURL *getHandle() noexcept;
-        };
+    class lock_guard
+    {
+    private:
+        std::atomic_flag& _lock;
+    public:
+        explicit lock_guard(std::atomic_flag& lock)noexcept:_lock(lock) {
+            while(_lock.test_and_set(std::memory_order_acquire));
+        }
+        ~lock_guard()noexcept {
+            _lock.clear(std::memory_order_release);
+        }
+    };
 
 }// namespace web
-
+#include "_curl_easy.h"
 // 工厂函数头文件，支持C++11及以上版本
 #include "_curl_makefn.h"
+
+#include "_curl_multi.h"
 
 #endif // __CURL_H

@@ -1,3 +1,4 @@
+#pragma once
 #ifndef _CURL_OPT_VAL_H
 #define _CURL_OPT_VAL_H 1
 
@@ -34,13 +35,20 @@ namespace web{
     using curl_closesocket_callback = void(*)(void*,curl_socket_t);
     using curl_chunk_end_callback = int(*)(void*);
     using curl_chunk_bgn_callback = int16_t(*)(void*,void*,int);
+    using curl_push_callback = int(*)(CURL*,CURL*,size_t,struct curl_pushheaders*,void*);
+    using curl_socket_callback = int(*)(CURL*,curl_socket_t,int,void*,void*);
+    using curl_timer_callback = int(*)(CURL*,int64_t,void*);
 
     union OptionValue{
         void *_pointer; // CURL*,CURLSH
         int _integer_; // curl_socket_t
+        int *_pinteger_; // curl_socket_t*
         int64_t _integer; // long ,curl_off_t
+        int64_t *_pinteger; // long*,curl_off_t*
         char *_token;
+        char **servers;
         const char *_text;
+        double *_pdouble;
 
         curl_wr_h_callback _wr_callback;
         curl_pg_callback_v4l _pg_callback_v4l;
@@ -63,18 +71,30 @@ namespace web{
         curl_closesocket_callback _closesocket_callback;
         curl_chunk_end_callback _chunk_end_callback;
         curl_chunk_bgn_callback _chunk_bgn_callback;
+        curl_push_callback _push_callback;
+        curl_socket_callback _socket_callback;
+        curl_timer_callback _timer_callback;
 
         FILE *_stream;
         curl_mime *_mime;
         struct curl_slist *_slist;
+        struct curl_slist **_pslist;
         struct curl_blob *_blob;
         struct curl_httppost *_httppost;
+        struct curl_tlssessioninfo *_tls;
+        struct curl_tlssessioninfo **p_tls;
+        struct curl_certinfo *_certinfo;
+        struct curl_certinfo **p_certinfo;
 
-        explicit OptionValue(int i):_integer_(i){}
-        explicit OptionValue(int64_t i):_integer(i){}
-        explicit OptionValue(char *t):_token(t){}
-        explicit OptionValue(const char *t):_text(t){}
         explicit OptionValue(void *p):_pointer(p){}
+        explicit OptionValue(int i):_integer_(i){}
+        explicit OptionValue(int *i):_pinteger_(i){}
+        explicit OptionValue(int64_t i):_integer(i){}
+        explicit OptionValue(int64_t *i):_pinteger(i){}
+        explicit OptionValue(char *t):_token(t){}
+        explicit OptionValue(char **s):servers(s){}
+        explicit OptionValue(const char *t):_text(t){}
+        explicit OptionValue(double *d):_pdouble(d){}
 
         explicit OptionValue(curl_wr_h_callback fn):_wr_callback(fn){}
         explicit OptionValue(curl_pg_callback_v4l fn):_pg_callback_v4l(fn){}
@@ -97,12 +117,20 @@ namespace web{
         explicit OptionValue(curl_closesocket_callback fn):_closesocket_callback(fn){}
         explicit OptionValue(curl_chunk_end_callback fn):_chunk_end_callback(fn){}
         explicit OptionValue(curl_chunk_bgn_callback fn):_chunk_bgn_callback(fn){}
+        explicit OptionValue(curl_push_callback fn):_push_callback(fn){}
+        explicit OptionValue(curl_socket_callback fn):_socket_callback(fn){}
+        explicit OptionValue(curl_timer_callback fn):_timer_callback(fn){}
 
         explicit OptionValue(FILE *f):_stream(f){}
         explicit OptionValue(curl_mime *mime):_mime(mime){}
         explicit OptionValue(struct curl_slist *slist):_slist(slist){}
+        explicit OptionValue(struct curl_slist **slist):_pslist(slist){}
         explicit OptionValue(struct curl_blob *blob):_blob(blob){}
         explicit OptionValue(struct curl_httppost *httppost):_httppost(httppost){}
+        explicit OptionValue(struct curl_tlssessioninfo *tls):_tls(tls){}
+        explicit OptionValue(struct curl_tlssessioninfo **tls):p_tls(tls){}
+        explicit OptionValue(struct curl_certinfo *certinfo):_certinfo(certinfo){}
+        explicit OptionValue(struct curl_certinfo **certinfo):p_certinfo(certinfo){}
     };
 }// namespace web
 

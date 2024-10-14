@@ -3,8 +3,9 @@
 
 #include <memory>
 #include <functional>
+#include <cstdio>
 
-#include "_curl_error_settings.h"
+#include "_curl_Macro_settings.h"
 
 namespace make_fn{
     // 返回类型判断模板
@@ -37,6 +38,7 @@ namespace make_fn{
                 }
             }
             catch(const std::bad_alloc &e){
+                fprintf(stderr,"make_fn<true,T>::make: %s\n, to fix it, try to build an object in the stack",e.what());
                 return make_fn<false,T>::make(func);
             }
             return tmp;
