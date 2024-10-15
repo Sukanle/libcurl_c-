@@ -15,7 +15,7 @@ int main()
 {
     web::curl_easy::global_init();
 
-    web::curl_easy curl_0;
+    // web::curl_easy curl_0;
     std::string htmlData;
 
 
@@ -60,13 +60,13 @@ int main()
 
     }
 #else
-    curl_0 = web::make_curl_easy((CURLoption)9999, "https://www.bilibili.com",CURLOPT_WRITEFUNCTION, writeCallback,CURLOPT_WRITEDATA, &htmlData);
-    fprintf(stderr, "curl_0.getErrorText(): %s\n", curl_0.getErrorText());
+    auto curl_0 = web::make_curl_easy<true>((CURLoption)9999, "https://www.bilibili.com",CURLOPT_WRITEFUNCTION, writeCallback,CURLOPT_WRITEDATA, &htmlData);
+    fprintf(stderr, "curl_0.getErrorText(): %s\n", curl_0->getErrorText());
 #endif
-    curl_0 = web::make_curl_easy(CURLOPT_URL, "https://www.bilibili.com",CURLOPT_WRITEFUNCTION, writeCallback,CURLOPT_WRITEDATA, &htmlData);
+    curl_0->setOption(CURLOPT_URL, "https://www.bilibili.com",CURLOPT_WRITEFUNCTION, writeCallback,CURLOPT_WRITEDATA, &htmlData);
 
-    curl_0.perform();
-    // curl_0->perform();
+    // curl_0.perform();
+    curl_0->perform();
 
     // printf("web::OptionValue的大小：%ld\n",sizeof(web::OptionValue));
     // printf("web::curl_easy的大小：%ld\n",sizeof(web::curl_easy));

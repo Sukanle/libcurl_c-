@@ -2,8 +2,8 @@
 
 namespace web
 {
-    size_t curl_multi::_multi_extant=0;
-    bool curl_multi::_auto_manage=false;
+    std::atomic<size_t> curl_multi::_multi_extant=0;
+    std::atomic_bool curl_multi::_auto_manage=false;
 
 /*=============================================================*/
 
@@ -29,7 +29,7 @@ namespace web
                     std::to_string(curl_easy::_easy_extant+_multi_extant)+
                     " curl_easy or curl_multi are still extant.");
 #else
-            fprintf(stderr,"Warning: %zu curl_easy or curl_multi are still extant.\n",_multi_extant);
+            fprintf(stderr,"Warning: %zu curl_easy or curl_multi are still extant.\n",_multi_extant.load());
             return false;
 #endif
         }
@@ -144,7 +144,15 @@ namespace web
         }
         return _error==CURLM_OK;
     }
-
+    CURLMsg *curl_multi::info_read(int msgs_in_queue) NOEXCEPT {
+        return curl_multi_info_read(_multi_handle,&msgs_in_queue);
+    }
+    bool curl_multi::socket_action(curl_socket_t s, int ev_bitmask, int *running_handles) NOEXCEPT {
+        _error=curl_multi_socket_action(_multi_handle,s,ev_bitmask,running_handles);
+        if(_error!=CURLM_OK){
+            _error_vec.emplace_back(_error);
+        }
+    }
 /*=============================================================*/
 
     CURL *curl_multi::getHandle()const noexcept {

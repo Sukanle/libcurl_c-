@@ -43,8 +43,8 @@ namespace web{
         void *_pointer; // CURL*,CURLSH
         int _integer_; // curl_socket_t
         int *_pinteger_; // curl_socket_t*
-        int64_t _integer; // long ,curl_off_t
-        int64_t *_pinteger; // long*,curl_off_t*
+        long _integer; // curl_off_t
+        long*_pinteger; // curl_off_t*
         char *_token;
         char **servers;
         const char *_text;

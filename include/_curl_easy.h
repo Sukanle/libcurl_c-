@@ -1,4 +1,5 @@
 #pragma once
+#include <curl/options.h>
 #ifndef _CURL_EASY_H
 #define _CURL_EASY_H 1
 
@@ -13,13 +14,15 @@ namespace web{
         CURLcode _error=CURLE_OK;
         std::vector<CURLcode> _error_vec;
 
-        static bool _auto_manage;
-        static std::atomic<size_t>_easy_extant;
+        static std::atomic_bool _auto_manage;
+        static std::atomic<size_t> _easy_extant;
 
         friend class curl_multi;
 
     public:
         mutable std::atomic_flag lock=ATOMIC_FLAG_INIT;
+
+    /****************************************类静态成员****************************************/
 
         /*
          * @brief: 全局初始化curl
@@ -52,6 +55,16 @@ namespace web{
         // @brief: 获取现存数量
         static size_t getExtant() noexcept;
 
+        /*
+         * @brief: 提供设置curl_easy_setopt的选项和值
+         * @param: option: 选项组，里面包含了选项和值
+         * @note: 通过vector<pair<CURLoption,void*>>来设置,静态函数
+         * */
+        NODISCARD static CURLcode setOption(CURL *curl,const curl_option &option) NOEXCEPT;
+        NODISCARD static CURLcode getinfo(CURL *curl,const curl_info_opt &info) NOEXCEPT;
+
+    /****************************************类通用函数*****************************************/
+
         curl_easy()NOEXCEPT;
         curl_easy(curl_easy &obj)noexcept;
         curl_easy(curl_easy &&obj)noexcept;
@@ -64,6 +77,9 @@ namespace web{
 
         // 重载bool类型转换,判断是否初始化成功
         explicit operator bool()const noexcept;
+
+    /****************************************************************************************/
+
         /*
          * @brief: 提供设置一对curl_easy_setopt的选项和值
          * @param: option: 选项
@@ -103,15 +119,99 @@ namespace web{
          * */
         bool setOption(curl_option &option) NOEXCEPT;
 
+    /****************************************************************************************/
+
         /*
-         * @brief: 提供设置curl_easy_setopt的选项和值
-         * @param: option: 选项组，里面包含了选项和值
-         * @note: 通过vector<pair<CURLoption,void*>>来设置,静态函数
+         * @brief: 提供获取curl_easy_getinfo的选项和值
+         * @param: info: 选项
+         * @param: value: 选项值
+         * @note: 可直接通过CURLINFO枚举类型来获取
          * */
-        NODISCARD static CURLcode setOption(CURL *curl,const curl_option &option) NOEXCEPT;
+        template<typename T>
+        bool getinfo(CURLINFO info,T &value) NOEXCEPT {
+            _error=curl_easy_getinfo(_curl,info,&value);
+            if(_error!=CURLE_OK){
+                _error_vec.emplace_back(_error);
+#ifdef CURL_ERROR_ON
+                THROW_CURL_ERROR(_error);
+#endif
+            }
+            return _error==CURLE_OK;
+        }
+
+        /*
+         * @brief: 提供获取curl_easy_getinfo的选项和值
+         * @param: info: 选项
+         * @param: value: 选项值
+         * @note: 可直接通过CURLINFO枚举类型来获取,可变参数模板，递归调用
+         * */
+        template<typename T,typename ...Args>
+        bool getinfo(CURLINFO info,T &value,Args&& ...args) NOEXCEPT {
+            return getinfo(info,value) && getinfo(std::forward<Args>(args)...);
+        }
+
+        /*
+         * @brief: 提供获取curl_easy_getinfo的选项和值
+         * @param: info: 选项组，里面包含了选项和值
+         * @note: 通过vector<pair<CURLINFO,void*>>来获取
+         * */
+        bool getinfo(curl_info_opt &info) NOEXCEPT;
+
+    /****************************************************************************************/
+
+        /*
+         * @brief: 接收数据
+         * @param: buffer: 数据缓冲区
+         * @param: n: 数据长度
+         * */
+        template<typename T>
+        bool recv(T *buffer,size_t *n) NOEXCEPT {
+            _error=curl_easy_recv(_curl,buffer,sizeof(T),n);
+            if(_error!=CURLE_OK){
+                _error_vec.emplace_back(_error);
+#ifdef CURL_ERROR_ON
+                THROW_CURL_ERROR(_error);
+#endif
+            }
+            return _error==CURLE_OK;
+        }
+        /*
+         * @brief: 发送数据
+         * @param: buffer: 数据缓冲区
+         * @param: n: 数据长度
+         * */
+        template<typename T>
+        bool send(T *buffer,size_t *n) NOEXCEPT {
+            _error=curl_easy_send(_curl,buffer,sizeof(T),n);
+            if(_error!=CURLE_OK){
+                _error_vec.emplace_back(_error);
+#ifdef CURL_ERROR_ON
+                THROW_CURL_ERROR(_error);
+#endif
+            }
+            return _error==CURLE_OK;
+        }
+
+    /****************************************************************************************/
+        /*
+         * @brief: 暂停和取消curl_easy连接
+         * @param: bitmask: CURLPAUSE枚举类型
+         * */
+        bool pause(int bitmask) NOEXCEPT;
 
         // @brief: 执行curl_easy_perform
         bool perform() NOEXCEPT;
+        // @brief: 重置curl_easy
+        bool restart() noexcept;
+
+        bool upkeep() NOEXCEPT;
+
+        char *escape(const char *str,int length) NOEXCEPT;
+
+        char *unescape(const char *str,int inlen,int *outlen) NOEXCEPT;
+
+        void reset() noexcept;
+    /****************************************************************************************/
 
         // @brief: 获取curl_easy的句柄
         NODISCARD CURL *getHandle() const noexcept;

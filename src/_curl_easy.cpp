@@ -3,7 +3,7 @@
 
 namespace web{
     std::atomic<size_t> curl_easy::_easy_extant=0;
-    bool curl_easy::_auto_manage=false; // 默认不自动管理全局初始化和清理
+    std::atomic_bool curl_easy::_auto_manage=false; // 默认不自动管理全局初始化和清理
 
 /*=============================================================*/
 
@@ -33,9 +33,11 @@ namespace web{
         _global_init=CURLE_FAILED_INIT;
         return true;
     }
+
     void curl_easy::auto_manage(bool flag) noexcept {
         _auto_manage=flag;
     }
+
     void curl_easy::add_easy_extant(unsigned int num) noexcept {
         _easy_extant+=num;
     }
@@ -45,6 +47,30 @@ namespace web{
 
     size_t curl_easy::getExtant() noexcept {
         return _easy_extant;
+    }
+
+    CURLcode curl_easy::setOption(CURL *curl,const curl_option &option) NOEXCEPT {
+        CURLcode _error=CURLE_OK;
+        for(const auto &i:option)
+            if((_error=curl_easy_setopt(curl,i.first,i.second))!=CURLE_OK)
+#ifdef CURL_ERROR_ON
+                THROW_CURL_ERROR(_error);
+#else
+                break;
+#endif
+        return _error;
+    }
+    CURLcode curl_easy::getinfo(CURL *curl,const curl_info_opt &info) NOEXCEPT {
+        CURLcode _error=CURLE_OK;
+        for(const auto &i:info)
+            if((_error=curl_easy_getinfo(curl,i.first,i.second))!=CURLE_OK)
+#ifdef CURL_ERROR_ON
+                THROW_CURL_ERROR(_error);
+#else
+                break;
+#endif
+
+        return _error;
     }
 
 /*=============================================================*/
@@ -137,16 +163,20 @@ namespace web{
         }
         return true;
     }
-    CURLcode curl_easy::setOption(CURL *curl,const curl_option &option) NOEXCEPT {
-        CURLcode _error=CURLE_OK;
-        for(const auto &i:option)
-            if((_error=curl_easy_setopt(curl,i.first,i.second))!=CURLE_OK)
+    bool curl_easy::getinfo(curl_info_opt &info) NOEXCEPT {
+        if(_curl==nullptr)
+            return false;
+        for(const auto &i:info)
+            if((_error=curl_easy_getinfo(_curl,i.first,i.second))!=CURLE_OK)
+            {
+                _error_vec.emplace_back(_error);
 #ifdef CURL_ERROR_ON
-                THROW_CURL_ERROR(_error)
+                THROW_CURL_ERROR(_error);
 #else
-                break;
+                return false;
 #endif
-        return _error;
+            }
+        return true;
     }
 
     bool curl_easy::perform() NOEXCEPT {
@@ -162,6 +192,67 @@ namespace web{
         return _error==CURLE_OK;
     }
 
+    bool curl_easy::restart() noexcept {
+        if(_curl==nullptr)
+            return false;
+        curl_easy_reset(_curl);
+        return true;
+    }
+    bool curl_easy::pause(int bitmask) NOEXCEPT {
+        if(_curl==nullptr)
+            return false;
+        _error=curl_easy_pause(_curl,bitmask);
+        if(_error!=CURLE_OK){
+            _error_vec.emplace_back(_error);
+#ifdef CURL_ERROR_ON
+            THROW_CURL_ERROR(_error);
+#endif
+        }
+        return _error==CURLE_OK;
+    }
+
+    bool curl_easy::upkeep() NOEXCEPT {
+        if(_curl==nullptr)
+            return false;
+        _error=curl_easy_upkeep(_curl);
+        if(_error!=CURLE_OK){
+            _error_vec.emplace_back(_error);
+#ifdef CURL_ERROR_ON
+            THROW_CURL_ERROR(_error);
+#endif
+        }
+        return _error==CURLE_OK;
+    }
+
+    char *curl_easy::escape(const char *string, int length) NOEXCEPT {
+        if(_curl==nullptr)
+            return nullptr;
+        if(length>CURL_MAX_INPUT_LENGTH)
+#ifdef CURL_ERROR_ON
+            throw std::invalid_argument("Error: The length of string is too long.");
+#else
+            return nullptr;
+#endif
+        return curl_easy_escape(_curl,string,length);
+    }
+
+    char *curl_easy::unescape(const char *string, int inlength, int *outlength) NOEXCEPT {
+        if(_curl==nullptr)
+            return nullptr;
+        if(*outlength>INT_MAX)
+#ifdef CURL_ERROR_ON
+            throw std::invalid_argument("Error: The length of string is too long.");
+#else
+        return nullptr;
+#endif
+        return curl_easy_unescape(_curl,string,inlength,outlength);
+    }
+
+    void curl_easy::reset() noexcept {
+        if(_curl==nullptr)
+            return;
+        curl_easy_reset(_curl);
+    }
 /*=============================================================*/
 
     CURL *curl_easy::getHandle() const noexcept {

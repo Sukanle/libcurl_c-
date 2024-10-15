@@ -15,8 +15,8 @@ namespace web
         std::vector<CURLMcode> _error_vec;
         bool _is_running=false;
 
-        static bool _auto_manage;
-        static size_t _multi_extant;
+        static std::atomic_bool _auto_manage;
+        static std::atomic<size_t> _multi_extant;
 
         friend class curl_easy;
 
@@ -116,8 +116,15 @@ namespace web
          * @param easy: CURL*对象
          * */
         bool addHandle(CURL *easy_handle) NOEXCEPT;
-        //@brief: 执行curl_multi_perform
+        //@brief: 非阻塞执行内部添加的easy句柄
         bool perform() NOEXCEPT;
+        /**
+         * @brief: 检测multi_handle中的easy句柄是否全部完成
+         * @param msgs_in_queue: 消息队列中的消息数量
+         * */
+        NODISCARD CURLMsg *info_read(int msgs_in_queue) NOEXCEPT;
+
+        bool socket_action(curl_socket_t s, int ev_bitmask, int *running_handles) NOEXCEPT;
 
         static bool addExtant() noexcept;
 

@@ -24,4 +24,6 @@
 #define CURL_GLOBAL CURL_GLOBAL_SSL
 #endif
 
+#define CURL_MAX_INPUT_LENGTH 8,388,608 /* 8MB */
+
 #endif

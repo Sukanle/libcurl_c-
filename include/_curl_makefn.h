@@ -72,7 +72,7 @@ namespace web{
      * @return: 返回一个curl_easy对象,或者一个unique_ptr<curl_easy>对象
      * */
     template<bool new_instance=false>
-    [[nodiscard]] auto make_curl_easy() NOEXCEPT ->
+    [[nodiscard]] auto make_curl_easy() ->
     std::conditional_t<new_instance,std::unique_ptr<curl_easy>,curl_easy> {
         if constexpr(new_instance)
             try{
@@ -92,7 +92,7 @@ namespace web{
      * @return: 返回一个curl_easy对象,或者一个unique_ptr<curl_easy>对象
      * */
     template<bool new_instance=false>
-    [[nodiscard]] auto make_curl_easy(curl_option &options) NOEXCEPT ->
+    [[nodiscard]] auto make_curl_easy(curl_option &options) ->
     std::conditional_t<new_instance,std::unique_ptr<curl_easy>,curl_easy>{
         if constexpr(new_instance){
             try{
@@ -122,23 +122,14 @@ namespace web{
      * */
     template<bool new_instance=false,typename T,typename ...Args>
     [[nodiscard]] auto make_curl_easy(
-            CURLoption &&option,T &&value,Args&& ...args) NOEXCEPT ->
+            CURLoption &&option,T &&value,Args&& ...args) ->
     std::conditional_t<new_instance,std::unique_ptr<curl_easy>,curl_easy>{
         if constexpr(new_instance){
-            try{
-                auto tmp = std::make_unique<curl_easy>();
-                tmp->setOption(std::forward<CURLoption>(option),
-                        std::forward<T>(value),
-                        std::forward<Args>(args)...);
-                return tmp;
-            }
-            catch(std::bad_alloc &e){
-                curl_easy tmp;
-                tmp.setOption(std::forward<CURLoption>(option),
-                        std::forward<T>(value),
-                        std::forward<Args>(args)...);
-                return tmp;
-            }
+            auto tmp = std::make_unique<curl_easy>();
+            tmp->setOption(std::forward<CURLoption>(option),
+                    std::forward<T>(value),
+                    std::forward<Args>(args)...);
+            return tmp;
         }
         else{
             curl_easy tmp;

@@ -15,6 +15,7 @@
 
 #include "_curl_Macro_settings.h"
 #include "_curlOptVal.h"
+#include <functional>
 
 #if defined CURL_ERROR_ENABLE
 #include "_curl_error.h"
@@ -26,6 +27,7 @@ namespace web {
 
     using curl_option=std::vector<std::pair<CURLoption,OptionValue>>;
     using curlm_option=std::vector<std::pair<CURLMoption,OptionValue>>;
+    using curl_info_opt=std::vector<std::pair<CURLINFO,OptionValue>>;
 
     extern CURLcode _global_init;
 
@@ -42,6 +44,13 @@ namespace web {
         }
     };
 
+    NODISCARD auto getEasyOption(CURLoption id) noexcept
+        -> const struct curl_easyoption *;
+    NODISCARD auto getEasyOption(const char *name) noexcept
+        -> const struct curl_easyoption *;
+
+    using ::curl_free;
+    extern std::function<const struct curl_easyoption*(const struct curl_easyoption*)> easyOptNext;
 }// namespace web
 #include "_curl_easy.h"
 // 工厂函数头文件，支持C++11及以上版本
