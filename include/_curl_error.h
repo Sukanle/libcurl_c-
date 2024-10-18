@@ -23,7 +23,8 @@
     if(_error!=CURLM_OK) \
         THROW_CURL_ERROR(_error)
 
-#define FILE_LINE_FUNC(_file,_line,_func) _file+":"+std::to_string(_line)+"("+_func+"):"
+#define ERR_FILE_LINE_FN(_file,_line,_func) \
+    ANSI_COLOR_RED "Error: "+_file+":"+std::to_string(_line)+"("+_func+"): " ANSI_COLOR_RESET
 
 
 namespace web{
@@ -36,9 +37,9 @@ namespace web{
         curl_error()=delete;
 #ifdef CURL_ERROR_DETAILED
         curl_error(CURLcode &errorcode, const std::string &file, int line, const std::string &func)noexcept :
-            _error(FILE_LINE_FUNC(file,line,func)+curl_easy_strerror(errorcode)){}
+            _error(ERR_FILE_LINE_FN(file,line,func)+curl_easy_strerror(errorcode)){}
         curl_error(CURLMcode &errorcode, const std::string &file, int line, const std::string &func)noexcept :
-            _error(FILE_LINE_FUNC(file,line,func)+curl_multi_strerror(errorcode)){}
+            _error(ERR_FILE_LINE_FN(file,line,func)+curl_multi_strerror(errorcode)){}
 #else
         curl_error(CURLcode &errorcode)noexcept :_error(curl_easy_strerror(errorcode)){}
         curl_error(CURLMcode &errorcode)noexcept :_error(curl_multi_strerror(errorcode)){}

@@ -2,37 +2,10 @@
 #include "_curl_easy.h"
 
 namespace web{
-    std::atomic<size_t> curl_easy::_easy_extant=0;
-    std::atomic_bool curl_easy::_auto_manage=false; // 默认不自动管理全局初始化和清理
+    std::atomic<size_t> curl_easy::_easy_extant={0};
+    std::atomic_bool curl_easy::_auto_manage={false}; // 默认不自动管理全局初始化和清理
 
 /*=============================================================*/
-
-    bool curl_easy::global_init() NOEXCEPT {
-        _global_init=curl_global_init(CURL_GLOBAL);
-#ifdef CURL_ERROR_ON
-        if(_global_init!=CURLE_OK)
-            THROW_CURL_ERROR(_global_init);
-#else
-        if(_global_init!=CURLE_OK)
-            return false;
-#endif
-        return true;
-        }
-    bool curl_easy::global_cleanup() NOEXCEPT {
-        if(_easy_extant!=0||curl_multi::_multi_extant!=0){
-#ifdef CURL_ERROR_ON
-            throw std::runtime_error(std::string("Error: There are ")+
-                    std::to_string(_easy_extant+curl_multi::_multi_extant)+
-                    " curl_easy or curl_multi are still extant.");
-#else
-            fprintf(stderr,"Error: There are %zu curl_easy or curl_multi are still extant.\n",_easy_extant+curl_multi::_multi_extant);
-#endif
-            return false;
-        }
-        curl_global_cleanup();
-        _global_init=CURLE_FAILED_INIT;
-        return true;
-    }
 
     void curl_easy::auto_manage(bool flag) noexcept {
         _auto_manage=flag;
@@ -79,9 +52,9 @@ namespace web{
         lock.clear();
         {
             lock_guard guard(lock);
-            if(_global_init!=CURLE_OK&&_auto_manage==true)
-                global_init();
-            else if(_global_init!=CURLE_OK&&_auto_manage==false)
+            if(curl_global::_global!=CURLE_OK&&_auto_manage==true)
+                curl_global::global_init();
+            else if(curl_global::_global!=CURLE_OK&&_auto_manage==false)
 #ifdef CURL_ERROR_ON
                 throw std::logic_error("Error: global is not inited.");
 #else
@@ -117,10 +90,12 @@ namespace web{
     }
 
     curl_easy::~curl_easy() noexcept {
+        if(_curl==nullptr)
+            return;
         curl_easy_cleanup(_curl);
         --_easy_extant;
-        if(_auto_manage==true)
-            global_cleanup();
+        if(_auto_manage==true&&_easy_extant==0)
+            curl_global::global_cleanup();
     }
 
     curl_easy& curl_easy::operator=(const curl_easy&obj) noexcept {

@@ -18,12 +18,33 @@
 #define NODISCARD __attribute__((warn_unused_result))
 #endif
 
-#ifdef _WIN32
-#define CURL_GLOBAL CURL_GLOBAL_WIN32
+#ifdef START_BEFORE_MAIN
+#define CONSTRUCTOR __attribute__((constructor))
 #else
-#define CURL_GLOBAL CURL_GLOBAL_SSL
+#define CONSTRUCTOR
 #endif
 
 #define CURL_MAX_INPUT_LENGTH 8,388,608 /* 8MB */
 
+#define ANSI_COLOR_RED "\033[31m"
+#define ANSI_COLOR_GREEN "\033[32m"
+#define ANSI_COLOR_YELLOW "\033[33m"
+#define ANSI_COLOR_BLUE "\033[34m"
+#define ANSI_COLOR_MAGENTA "\033[35m"
+#define ANSI_COLOR_CYAN "\033[36m"
+#define ANSI_COLOR_WHITE "\033[37m"
+#define ANSI_COLOR_DEFAULT "\033[39m"
+#define ANSI_COLOR_RESET "\033[0m"
+
+// #define PROMPT_HEADER(_state,_color) \
+//     _color _state ": " __FILE__ ": %lu(" __FUNCTION__ "): " ANSI_COLOR_RESET
+
+#define LOG_PROMPT(message,_state,_color) \
+    fprintf(stderr, _color "%s: %s: %lu(%s): " ANSI_COLOR_RESET "%s", \
+        _state, __FILE__, (unsigned long)__LINE__, __FUNCTION__, message)
+
+#define ERROR_LOG(_message) LOG_PROMPT(_message,"Error",ANSI_COLOR_RED)
+#define WARNING_LOG(_message) LOG_PROMPT(_message,"Warning",ANSI_COLOR_YELLOW)
+#define INFO_LOG(_message) LOG_PROMPT(_message,"Info",ANSI_COLOR_CYAN)
+#define DEBUG_LOG(_message) LOG_PROMPT(_message,"Debug",ANSI_COLOR_GREEN)
 #endif

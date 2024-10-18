@@ -1,5 +1,4 @@
 #pragma once
-#include <curl/options.h>
 #ifndef _CURL_EASY_H
 #define _CURL_EASY_H 1
 
@@ -18,23 +17,13 @@ namespace web{
         static std::atomic<size_t> _easy_extant;
 
         friend class curl_multi;
+        friend class curl_global;
 
     public:
         mutable std::atomic_flag lock=ATOMIC_FLAG_INIT;
 
     /****************************************类静态成员****************************************/
 
-        /*
-         * @brief: 全局初始化curl
-         * @return: 初始化成功返回true，否则返回false
-         * @attention: 请确保在使用curl_easy之前调用
-         * */
-        static bool global_init() NOEXCEPT;
-        /*
-         * @brief: 全局清理curl
-         * @attention: 请确保所有curl相关对象已经销毁
-         * */
-        static bool global_cleanup() NOEXCEPT;
         /*
          * @brief: 设置是否自动管理全局初始化和清理
          * @param: flag: false表示不自动管理，true表示自动管理
@@ -61,6 +50,11 @@ namespace web{
          * @note: 通过vector<pair<CURLoption,void*>>来设置,静态函数
          * */
         NODISCARD static CURLcode setOption(CURL *curl,const curl_option &option) NOEXCEPT;
+        /*
+         * @brief: 从curl_easy中提取信息
+         * @param: info: 选项组，里面包含了选项和值
+         * @note: 通过vector<pair<CURLINFO,void*>>来获取,静态函数
+         * */
         NODISCARD static CURLcode getinfo(CURL *curl,const curl_info_opt &info) NOEXCEPT;
 
     /****************************************类通用函数*****************************************/
@@ -122,7 +116,7 @@ namespace web{
     /****************************************************************************************/
 
         /*
-         * @brief: 提供获取curl_easy_getinfo的选项和值
+         * @brief: 从curl_easy中提取信息
          * @param: info: 选项
          * @param: value: 选项值
          * @note: 可直接通过CURLINFO枚举类型来获取
@@ -140,7 +134,7 @@ namespace web{
         }
 
         /*
-         * @brief: 提供获取curl_easy_getinfo的选项和值
+         * @brief: 从curl_easy中提取信息
          * @param: info: 选项
          * @param: value: 选项值
          * @note: 可直接通过CURLINFO枚举类型来获取,可变参数模板，递归调用
@@ -151,7 +145,7 @@ namespace web{
         }
 
         /*
-         * @brief: 提供获取curl_easy_getinfo的选项和值
+         * @brief: 从curl_easy中提取信息
          * @param: info: 选项组，里面包含了选项和值
          * @note: 通过vector<pair<CURLINFO,void*>>来获取
          * */
@@ -203,13 +197,13 @@ namespace web{
         bool perform() NOEXCEPT;
         // @brief: 重置curl_easy
         bool restart() noexcept;
-
+        // @brief: 执行连接维护检测，保持连接处于活动状态
         bool upkeep() NOEXCEPT;
-
+        // @brief: 对给定字符串进行URL编码
         char *escape(const char *str,int length) NOEXCEPT;
-
+        // @brief: 对给定字符串进行URL解码
         char *unescape(const char *str,int inlen,int *outlen) NOEXCEPT;
-
+        // @brief: 重置curl_easy的CURL*句柄选项
         void reset() noexcept;
     /****************************************************************************************/
 
@@ -220,6 +214,5 @@ namespace web{
         // @brief: 获取curl_easy的错误信息
         NODISCARD const char *getErrorText() const noexcept;
     };
-}// namespace web
-
+} // namespace web
 #endif
