@@ -6,11 +6,10 @@
 #include <fstream>
 namespace web{
         // 枚举类型，用于标识数据类型
-    enum class KeyType
-    {
-        text,
-        image,
-        video
+    enum fd_type{
+        fd_read=0,
+        fd_write,
+        fd_except
     };
 
 

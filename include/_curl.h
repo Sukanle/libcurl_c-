@@ -8,9 +8,10 @@
 #include "help_c++11.hpp"
 #endif
 
-#include <vector>
-#include <utility>
+#include <array>
 #include <atomic>
+#include <utility>
+#include <vector>
 #include <string>
 
 #include <curl/curl.h>
@@ -18,6 +19,7 @@
 #include "_curl_Macro_settings.h"
 #include "_curlOptVal.h"
 #include <functional>
+#include <sys/select.h>
 
 #if defined CURL_ERROR_ENABLE || defined CURL_ERROR_DETAILED
 #include "_curl_error.h"

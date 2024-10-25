@@ -15,13 +15,15 @@ namespace web
         std::vector<CURLMcode> _error_vec;
         bool _is_running=false;
         std::vector<curl_easy*> _easy_handles;
+        int _max_fd=0;
+        std::array<fd_set,3> _multi_fd={};
+        timeval _timeout={0,0};
 
         static std::atomic_bool _auto_manage;
         static std::atomic<size_t> _multi_extant;
 
         friend class curl_easy;
         friend class curl_global;
-
     public:
         mutable std::atomic_flag lock=ATOMIC_FLAG_INIT;
 
@@ -59,6 +61,7 @@ namespace web
         curl_multi& operator=(const curl_multi&) = delete;
 
         curl_multi()NOEXCEPT;
+        explicit curl_multi(const timeval &timeout)NOEXCEPT;
         curl_multi(curl_multi&&) noexcept;
         curl_multi& operator=(curl_multi&&) noexcept;
         explicit operator bool()const noexcept;
@@ -111,17 +114,51 @@ namespace web
          * */
         bool addHandle(curl_easy &easy) NOEXCEPT;
 
+        bool rmHandle(curl_easy &easy) NOEXCEPT;
+
+        //@brief: 设置超时时间
+        void setTimeval(const struct timeval &tv) noexcept{_timeout=tv;}
+
+        //@brief: 设置超时时间
+        void setTimeval(const long &sec,const long &usec) noexcept{
+            _timeout.tv_sec=sec;
+            _timeout.tv_usec=usec;
+        }
+
+        void setMaxFd(int max_fd) noexcept{_max_fd=max_fd;}
         //@brief: 非阻塞执行内部添加的easy句柄
         bool perform() NOEXCEPT;
 
-        bool fdset(fd_set *read_fd_set, fd_set *write_fd_set, fd_set *exc_fd_set, int *max_fd) NOEXCEPT;
+        //@brief: 在给定操作的情况下读取/写入可用数据
+        bool socket_action(curl_socket_t skt, int ev_bitmask) NOEXCEPT;
 
+        bool socket_all() NOEXCEPT;
+
+        //@brief: 获取文件描述符集合，用于I/O多路复用(select/poll/epoll)
+        bool fdset() NOEXCEPT;
+
+        //@brief: 用于I/O多路复用(select)
+        bool select() NOEXCEPT;
+
+        //@brief: 用于I/O多路复用(poll)
+        bool poll(struct curl_waitfd extra_fds[],uint extra_nfds,int timeout_ms,int &numfds) NOEXCEPT;
+
+        //@brief: 设置超时时间
+        bool timeout(long timeout) NOEXCEPT;
+
+        bool wait(struct curl_waitfd extra_fds[],uint extra_nfds,int timeout_ms,int &numfds) NOEXCEPT;
+
+        bool assign(curl_socket_t sockfd,void *sockp) NOEXCEPT;
+
+#if LIBCURL_VERSION_NUM >= 0x080800
+        bool waitfds(struct curl_waitfd extra_fds[],uint size,uint &fd_count) NOEXCEPT;
+#endif
+        bool wakeup() NOEXCEPT;
         /**
          * @brief: 检测multi_handle中的easy句柄是否全部完成
          * @param msgs_in_queue: 消息队列中的消息数量
          * */
         NODISCARD CURLMsg *info_read(int msgs_in_queue) NOEXCEPT;
-        bool socket_action(curl_socket_t s, int ev_bitmask, int *running_handles) NOEXCEPT;
 
         /*===============================================================================================*/
 
@@ -131,12 +168,20 @@ namespace web
         NODISCARD CURLMcode getError() const noexcept;
         //@brief: 获取curl_multi的错误信息
         NODISCARD const char* getErrorText() const noexcept;
+        //@brief: 获取curl_multi的错误码集合
+        NODISCARD const std::vector<CURLMcode> &getErrorVec() const NOEXCEPT;
         //@brief: 获取curl_multi的easy句柄数量
         NODISCARD int getEasyExtant() const noexcept;
         //@brief: 获取curl_multi是否正在运行
         NODISCARD bool isRunning() const noexcept;
         //@brief: 获取curl_multi的存储的所以easy句柄
         NODISCARD std::vector<curl_easy*> getEasyHandles() const NOEXCEPT;
+        //@brief: 获取curl_multi的最大文件描述符
+        NODISCARD int getMaxFd() const noexcept;
+        //@brief: 获取curl_multi的文件描述符集合
+        NODISCARD std::array<fd_set,3> getMultiFd() const noexcept;
+        //@brief: 获取curl_multi的超时时间
+        NODISCARD struct timeval getTimeout() const noexcept;
     };
 }//namespace web
 

@@ -213,6 +213,8 @@ namespace web{
         NODISCARD CURLcode getError() const noexcept;
         // @brief: 获取curl_easy的错误信息
         NODISCARD const char *getErrorText() const noexcept;
+        // @brief: 获取curl_easy的错误码集合
+        NODISCARD const std::vector<CURLcode> &getErrorVec() const noexcept;
     };
 } // namespace web
 #endif

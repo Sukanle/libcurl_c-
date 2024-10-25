@@ -239,5 +239,7 @@ namespace web{
     const char *curl_easy::getErrorText() const noexcept {
         return curl_easy_strerror(_error);
     }
-
+    const std::vector<CURLcode> &curl_easy::getErrorVec() const noexcept {
+        return _error_vec;
+    }
 }
