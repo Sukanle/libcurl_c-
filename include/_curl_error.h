@@ -4,6 +4,8 @@
 
 #include <exception>
 
+#if defined CURL_ERROR_ENABLE || defined CURL_ERROR_DETAILED
+
 #if __cplusplus < 201703L
 #define NODISCARD __attribute__((warn_unused_result))
 #else
@@ -61,4 +63,9 @@ namespace web{
         }
     };
 } // namespace web
+#endif
+namespace web{
+    template<typename ErrorCode>
+    const std::string &getstrerr(const ErrorCode &errorcode) noexcept;
+}// namespace web
 #endif // _CURL_ERROR_H

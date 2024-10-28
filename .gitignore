@@ -8,3 +8,4 @@ learn/*
 build/*
 .cache/*
 *.html
+*.txt

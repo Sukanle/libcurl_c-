@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.26)
 project(libcurl_cpp VERSION 0.1 LANGUAGES CXX C)
 
 find_package(CURL REQUIRED)
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBXML2 REQUIRED libxml-2.0)
+
+
 set(CMAKE_C_COMPILER "gcc" CACHE STRING "C compiler" FORCE)
 set(CNAKE_CXX_COMPILE "g++" CACHE STRING "C++ compiler" FORCE)
 
@@ -38,22 +43,22 @@ endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CURL_INCLUDE_DIRS})
+include_directories(${LIBXML2_INCLUDE_DIRS})
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BIN_OUT})
 
 set(LIB_DIR_SHARED ${LIB_OUT}/shared)
 set(LIB_DIR_STATIC ${LIB_OUT}/static)
 
-# file(GLOB SRC_CURL_EASY ${CMAKE_SOURCE_DIR}/src/_curl_easy.cpp)
-# file(GLOB SRC_CURL_MULTI ${CMAKE_SOURCE_DIR}/src/_curl_multi.cpp)
+file(GLOB SOURCES "./src/*.cpp")
 
-add_library(_curl SHARED ./src/_curl_easy.cpp ./src/_curl_multi.cpp ./src/_curl_global.cpp)
-target_link_libraries(_curl CURL::libcurl)
-target_include_directories(_curl PUBLIC ${CMAKE_SOURCE_DIR}/include)
-set_target_properties(_curl PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${LIB_DIR_SHARED})
+add_library(curlc++ SHARED ${SOURCES})
+target_link_libraries(curlc++ CURL::libcurl)
+# target_include_directories(curlc++ PUBLIC ${CMAKE_SOURCE_DIR}/include)
+set_target_properties(curlc++ PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${LIB_DIR_SHARED})
 
 file(GLOB CRAWLER ${CMAKE_SOURCE_DIR}/test/crawler.cpp)
 
 add_executable(crawler ${CRAWLER})
 
-target_link_libraries(crawler _curl)
+target_link_libraries(crawler curlc++ ${LIBXML2_LIBRARIES})

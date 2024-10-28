@@ -8,22 +8,24 @@
 #include "help_c++11.hpp"
 #endif
 
+// C++ ISO (C++11)
 #include <array>
 #include <atomic>
 #include <utility>
 #include <vector>
 #include <string>
+#include <map>
+#include <functional>
 
+// Linux
+#include <sys/select.h>
+
+// libcurl
 #include <curl/curl.h>
 
 #include "_curl_Macro_settings.h"
 #include "_curlOptVal.h"
-#include <functional>
-#include <sys/select.h>
-
-#if defined CURL_ERROR_ENABLE || defined CURL_ERROR_DETAILED
 #include "_curl_error.h"
-#endif
 
 namespace web {
 
@@ -51,8 +53,9 @@ namespace web {
 
     using ::curl_free;
     extern std::function<const struct curl_easyoption*
-        (const struct curl_easyoption*)> easyOptNext;
+        (const struct curl_easyoption*)> getEasyOptNext;
     CONSTRUCTOR void init_easyOptNext();
+
 }// namespace web
 
 #include "_curl_easy.h"
@@ -90,4 +93,6 @@ namespace web{
         NODISCARD static CURLcode error()noexcept;
     };
 };// namespace web
+
+#include "_curl_http.h"
 #endif // __CURL_H

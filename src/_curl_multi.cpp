@@ -177,7 +177,7 @@ namespace web
         if(_select==-1)
             throw std::runtime_error("select failed");
 #endif
-        return _select>=0;
+        return _select>0;
     }
     bool curl_multi::poll(struct curl_waitfd extra_fds[],uint extra_nfds,int timeout_ms,int &numfds) NOEXCEPT{
         _error=curl_multi_poll(_curlm,extra_fds,extra_nfds,timeout_ms,&numfds);

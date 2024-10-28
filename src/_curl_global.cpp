@@ -3,19 +3,19 @@
 namespace web{
     CURLcode curl_global::_global=CURLE_FAILED_INIT;
 
-    std::function<const struct curl_easyoption*(const struct curl_easyoption*)> easyOptNext;
+    std::function<const struct curl_easyoption*(const struct curl_easyoption*)> getEasyOptNext;
 
-    auto getoption(CURLoption id) noexcept
+    auto getEasyOption(CURLoption id) noexcept
         -> const struct curl_easyoption * {
         return curl_easy_option_by_id(id);
     }
 
-    auto getoption(const char *name) noexcept
+    auto getEasyOption(const char *name) noexcept
         -> const struct curl_easyoption * {
         return curl_easy_option_by_name(name);
     }
     void init_easyOptNext() {
-        easyOptNext=[](const struct curl_easyoption *opt) noexcept ->
+        getEasyOptNext=[](const struct curl_easyoption *opt) noexcept ->
             const struct curl_easyoption*{
             return curl_easy_option_next(opt);
         };
