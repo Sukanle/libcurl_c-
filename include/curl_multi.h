@@ -126,6 +126,9 @@ public:
     bool rmHandle(const curl_easy& easy) NOEXCEPT;
     bool rmHandle(curl_easy* easy) NOEXCEPT { return rmHandle(*easy); }
 
+    int add_easy_extant(int num=1) noexcept;
+    int sub_easy_extant(int num=1) noexcept;
+
     //@brief: 设置超时时间
     void setTimeval(const struct timeval& tv) noexcept { _timeout = tv; }
 

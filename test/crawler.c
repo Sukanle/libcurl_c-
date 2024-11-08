@@ -6,8 +6,8 @@ int follow_relative_links = 0;
 
 // char *start_page = "https://www.bilibili.com";
 char *start_page[] = {
+  "https://www.baidu.com",
   "https://www.bilibili.com",
-  /* "https://www.baidu.com", */
   "https://cn.bing.com",
   // "https://www.taobao.com",
   // "https://www.jd.com",
@@ -180,6 +180,8 @@ int main(void)
   curl_multi_setopt(multi_handle, CURLMOPT_PIPELINING, CURLPIPE_MULTIPLEX);
 #endif
 
+  struct timeval start, end;
+  gettimeofday(&start, NULL);
   /* sets html start page */
   for(int i = 0; i < sizeof(start_page)/sizeof(start_page[0]); i++)
     curl_multi_add_handle(multi_handle, make_handle(start_page[i]));
@@ -190,8 +192,8 @@ int main(void)
   int still_running = 1;
   while(still_running && !pending_interrupt) {
     int numfds;
-    printf("numfds: %d\n", numfds);
     curl_multi_wait(multi_handle, NULL, 0, 1000, &numfds);
+    /* printf("numfds: %d\n", numfds); */
     curl_multi_perform(multi_handle, &still_running);
 
     /* See how the transfers went */
@@ -236,6 +238,9 @@ int main(void)
       }
     }
   }
+  gettimeofday(&end, NULL);
+  long long elapsed = (end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec;
+  printf("Elapsed time: %lld us\n", elapsed);
   curl_multi_cleanup(multi_handle);
   curl_global_cleanup();
   fclose(logfile);

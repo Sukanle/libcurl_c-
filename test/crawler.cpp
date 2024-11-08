@@ -6,6 +6,7 @@
 #include <libxml/uri.h>
 #include <libxml/xpath.h>
 #include <signal.h>
+#include <sys/time.h>
 
 #include "curl.h"
 
@@ -14,16 +15,16 @@ std::ofstream webfile("web.html");
 
 char* start_page[] = {
     "https://www.baidu.com",
-    // "https://cn.bing.com",
-    // "https://www.bilibili.com",
-    "https://www.taobao.com",
+    "https://cn.bing.com",
+    "https://www.bilibili.com",
+    // "https://www.taobao.com",
     // "https://www.jd.com",
 };
 
 constexpr int max_con = 200;
 constexpr int max_total = 20000;
 constexpr int max_requests = 500;
-constexpr int max_link_per_page = 100;
+constexpr int max_link_per_page = 5;
 constexpr int follow_relative_links = 0;
 
 int pending_interrupt = 0;
@@ -50,7 +51,6 @@ size_t grow_buffer(void* contents, size_t sz, size_t nmemb, void* ctx)
 
 auto make_handle(const std::string& url) -> web::curl_easy*
 {
-    printf("url: %s\n", url.c_str());
     web::curl_easy* easy = new web::curl_easy();
     /* Important: use HTTP2 over HTTPS */
     easy->setOption(CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2TLS);
@@ -160,6 +160,8 @@ int main()
     multi.setOption(CURLMOPT_PIPELINING, CURLPIPE_MULTIPLEX);
 #endif
 
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
     /* sets html start page */
     for (int i = 0; i < sizeof(start_page) / sizeof(start_page[0]); ++i)
         multi.addHandle(make_handle(start_page[i]));
@@ -170,14 +172,12 @@ int main()
     while (multi.getEasyExtant() && !pending_interrupt) {
         int numfds;
         multi.wait(nullptr, 0, 1000, numfds);
-        printf("numfds: %d\n", numfds);
         multi.perform();
 
         /* See how the transfers went */
         web::curl_msg m;
 
-        while ((m = web::curl_msg(multi.info_read(&msgs_left), multi)))
-        {
+        while ((m = web::curl_msg(multi.info_read(&msgs_left), multi))) {
             if (m.getMsg()->msg == CURLMSG_DONE) {
                 auto& easy = *m.getEasy();
                 char* url;
@@ -194,6 +194,7 @@ int main()
                         if (is_html(ctype) && mem->length() > 100) {
                             if (pending < max_requests && (complete + pending) < max_total) {
                                 pending += follow_links(multi, mem, url);
+                                multi.add_easy_extant();
                             }
                         }
                     } else {
@@ -204,12 +205,15 @@ int main()
                 }
                 multi.rmHandle(easy);
                 web::curl_forced_cleanup(easy);
+                delete mem;
                 complete++;
                 pending--;
             }
         }
     }
-    // web::curl_easy::sub_easy_extant();
+    gettimeofday(&end, NULL);
+    long long elapsed = (end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec;
+    fmt::print("Elapsed time: {}us\n", elapsed);
 
     logfile.close();
     webfile.close();

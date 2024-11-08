@@ -71,7 +71,7 @@ curl_multi::~curl_multi()
         return;
     curl_multi_cleanup(_curlm);
     _multi_extant--;
-    if (_easy_extant > 0){
+    if (_easy_extant > 0) {
         throw std::logic_error(
             "curl_easy objects still exist, pleas check the life cycle of the object");
         abort();
@@ -129,9 +129,11 @@ bool curl_multi::rmHandle(const curl_easy& easy) NOEXCEPT
         return false;
 #endif
     }
-    _easy_extant--;
+    // _easy_extant--;
     return true;
 }
+int curl_multi::add_easy_extant(int num) noexcept { _easy_extant += num; return _easy_extant; }
+int curl_multi::sub_easy_extant(int num) noexcept { _easy_extant -= num; return _easy_extant; }
 bool curl_multi::perform() NOEXCEPT
 {
     _error = curl_multi_perform(_curlm, &_easy_extant);
@@ -274,7 +276,8 @@ struct timeval curl_multi::getTimeout() const noexcept { return _timeout; }
 
 /*=============================================================*/
 
-curl_msg::curl_msg(CURLMsg* msg, curl_multi& multi) noexcept : _msg(msg)
+curl_msg::curl_msg(CURLMsg* msg, curl_multi& multi) noexcept
+    : _msg(msg)
 {
     if (msg == nullptr)
         return;
@@ -287,7 +290,7 @@ curl_msg::curl_msg(CURLMsg* msg, curl_multi& multi) noexcept : _msg(msg)
 }
 curl_msg::operator bool() const noexcept
 {
-    if(_msg == nullptr || _easy == nullptr)
+    if (_msg == nullptr || _easy == nullptr)
         return false;
     return true;
 }
