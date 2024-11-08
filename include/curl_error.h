@@ -1,6 +1,6 @@
 #pragma once
-#ifndef _CURL_ERROR_H
-#define _CURL_ERROR_H 1
+#ifndef CPP_CURL_ERROR_H
+#define CPP_CURL_ERROR_H 1
 
 #include <exception>
 

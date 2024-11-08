@@ -1,6 +1,6 @@
 #pragma once
-#ifndef _CURL_OPT_VAL_H
-#define _CURL_OPT_VAL_H 1
+#ifndef CPP_CURL_OPTVAL_H
+#define CPP_CURL_OPTVAL_H 1
 
 #include <curl/curl.h>
 #include <fstream>

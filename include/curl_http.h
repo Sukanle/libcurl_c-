@@ -1,7 +1,7 @@
 #pragma once
-#ifndef _CURL_HTTP_H
-#define _CURL_HTTP_H 1
-#include "_curl.h"
+#ifndef CPP_CURL_HTTP_H
+#define CPP_CURL_HTTP_H 1
+#include "curl.h"
 
 namespace web{
     enum http_error

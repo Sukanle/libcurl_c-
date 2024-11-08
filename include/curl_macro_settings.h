@@ -1,6 +1,6 @@
 #pragma once
-#ifndef _CURL_ERROR_SETTINGS_H
-#define _CURL_ERROR_SETTINGS_H 1
+#ifndef CPP_CURL_MACRO_SETTINGS_H
+#define CPP_CURL_MACRO_SETTINGS_H 1
 
 #define LIBCURL_AT_LEAST_VERSION LIBCURL_VERSION_NUM
 
@@ -32,7 +32,7 @@
 #define CONSTRUCTOR
 #endif
 
-#define CURL_MAX_INPUT_LENGTH 8,388,608 /* 8MB */
+#define CURL_MAX_INPUT_LENGTH 8388608 /* 8MB */
 
 #define ANSI_COLOR_RED "\033[31m"
 #define ANSI_COLOR_GREEN "\033[32m"
@@ -47,12 +47,12 @@
 // #define PROMPT_HEADER(_state,_color) \
 //     _color _state ": " __FILE__ ": %lu(" __FUNCTION__ "): " ANSI_COLOR_RESET
 
-#define LOG_PROMPT(message,_state,_color) \
-    fprintf(stderr, _color "%s: %s: %lu(%s): " ANSI_COLOR_RESET "%s", \
-        _state, __FILE__, (unsigned long)__LINE__, __FUNCTION__, message)
+#define LOG_PROMPT(message, _state, _color)                                                        \
+    fprintf(stderr, _color "%s: %s: %lu(%s): " ANSI_COLOR_RESET "%s", _state, __FILE__,            \
+        (unsigned long)__LINE__, __FUNCTION__, message)
 
-#define ERROR_LOG(_message) LOG_PROMPT(_message,"Error",ANSI_COLOR_RED)
-#define WARNING_LOG(_message) LOG_PROMPT(_message,"Warning",ANSI_COLOR_YELLOW)
-#define INFO_LOG(_message) LOG_PROMPT(_message,"Info",ANSI_COLOR_CYAN)
-#define DEBUG_LOG(_message) LOG_PROMPT(_message,"Debug",ANSI_COLOR_GREEN)
+#define ERROR_LOG(_message) LOG_PROMPT(_message, "Error", ANSI_COLOR_RED)
+#define WARNING_LOG(_message) LOG_PROMPT(_message, "Warning", ANSI_COLOR_YELLOW)
+#define INFO_LOG(_message) LOG_PROMPT(_message, "Info", ANSI_COLOR_CYAN)
+#define DEBUG_LOG(_message) LOG_PROMPT(_message, "Debug", ANSI_COLOR_GREEN)
 #endif

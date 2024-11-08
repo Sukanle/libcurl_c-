@@ -1,5 +1,5 @@
-#include "_curl.h"
-#include "_curl_easy.h"
+#include "curl.h"
+#include "curl_easy.h"
 
 namespace web{
     std::atomic<size_t> curl_easy::_easy_extant={0};
@@ -76,7 +76,7 @@ namespace web{
     }
     curl_easy::curl_easy(curl_easy& obj) noexcept{
         if(this==&obj)
-            return;
+            return ;
             _curl=curl_easy_duphandle(obj._curl);
             ++_easy_extant;
     }

@@ -1,4 +1,4 @@
-#include "_curl.h"
+#include "curl.h"
 
 namespace web{
     CURLcode curl_global::_global=CURLE_FAILED_INIT;
@@ -43,7 +43,7 @@ namespace web{
                     std::to_string(curl_easy::_easy_extant+curl_multi::_multi_extant)+
                     " curl_easy or curl_multi are still extant.");
 #else
-        fprintf(stderr,"Error: There are %zu curl_easy or curl_multi are still extant.\n",curl_easy::_easy_extant+curl_multi::_multi_extant);
+        fprintf(stderr,"Error: There are %zu curl_easy and %zu curl_multi are still extant.\n",curl_easy::_easy_extant.load(),curl_multi::_multi_extant.load());
 #endif
             return false;
         }
