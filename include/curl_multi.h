@@ -65,11 +65,12 @@ public:
     curl_multi(const curl_multi&) = delete;
     curl_multi& operator=(const curl_multi&) = delete;
 
-    curl_multi() NOEXCEPT;
-    explicit curl_multi(const timeval& timeout) NOEXCEPT;
+    curl_multi() noexcept;
+    explicit curl_multi(const timeval& timeout) noexcept;
     curl_multi(curl_multi&&) noexcept;
     curl_multi& operator=(curl_multi&&) noexcept;
     explicit operator bool() const noexcept;
+    explicit operator CURLM*() const noexcept;
 
     ~curl_multi();
 

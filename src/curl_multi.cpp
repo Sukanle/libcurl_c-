@@ -14,10 +14,11 @@ size_t curl_multi::extant() noexcept { return _multi_extant; }
 
 /*=============================================================*/
 
-curl_multi::curl_multi() NOEXCEPT
+curl_multi::curl_multi() noexcept
 {
     lock.clear();
-    if (_auto_manage == true)
+
+    if (curl_global::_global != CURLE_OK)
         curl_global::global_init();
 
     FD_ZERO(&_multi_fd[fd_read]);
@@ -28,15 +29,12 @@ curl_multi::curl_multi() NOEXCEPT
     if (_curlm == nullptr) {
         _error = CURLM_INTERNAL_ERROR;
         _error_vec.emplace_back(_error);
-#ifdef CURL_ERROR_ON
-        THROW_CURL_ERROR(_error);
-#else
         fprintf(stderr, "curl_multi_init failed\n");
-#endif
     }
     _multi_extant++;
 }
-curl_multi::curl_multi(const struct timeval& timeval) NOEXCEPT : curl_multi()
+curl_multi::curl_multi(const struct timeval& timeval) noexcept
+    : curl_multi()
 {
     _timeout = timeval;
 }
@@ -80,6 +78,7 @@ curl_multi::~curl_multi()
         curl_global::global_cleanup();
 }
 curl_multi::operator bool() const noexcept { return _curlm == nullptr; }
+curl_multi::operator CURLM*() const noexcept { return _curlm; }
 
 /*=============================================================*/
 
@@ -132,8 +131,16 @@ bool curl_multi::rmHandle(const curl_easy& easy) NOEXCEPT
     // _easy_extant--;
     return true;
 }
-int curl_multi::add_easy_extant(int num) noexcept { _easy_extant += num; return _easy_extant; }
-int curl_multi::sub_easy_extant(int num) noexcept { _easy_extant -= num; return _easy_extant; }
+int curl_multi::add_easy_extant(int num) noexcept
+{
+    _easy_extant += num;
+    return _easy_extant;
+}
+int curl_multi::sub_easy_extant(int num) noexcept
+{
+    _easy_extant -= num;
+    return _easy_extant;
+}
 bool curl_multi::perform() NOEXCEPT
 {
     _error = curl_multi_perform(_curlm, &_easy_extant);

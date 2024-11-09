@@ -58,7 +58,7 @@ public:
 
     /****************************************类通用函数*****************************************/
 
-    curl_easy() NOEXCEPT;
+    curl_easy() noexcept;
     curl_easy(curl_easy& obj) noexcept;
     curl_easy(curl_easy&& obj) noexcept;
 
@@ -69,6 +69,7 @@ public:
 
     // 重载bool类型转换,判断是否初始化成功
     explicit operator bool() const noexcept;
+    explicit operator CURL*() const noexcept;
 
     /****************************************************************************************/
 

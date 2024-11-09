@@ -14,9 +14,7 @@ std::ofstream logfile("log.txt", std::ios::app);
 std::ofstream webfile("web.html");
 
 char* start_page[] = {
-    "https://www.baidu.com",
-    "https://cn.bing.com",
-    "https://www.bilibili.com",
+    "https://www.baidu.com", "https://cn.bing.com", "https://www.bilibili.com",
     // "https://www.taobao.com",
     // "https://www.jd.com",
 };
@@ -49,7 +47,7 @@ size_t grow_buffer(void* contents, size_t sz, size_t nmemb, void* ctx)
     return realsize;
 }
 
-auto make_handle(const std::string& url) -> web::curl_easy*
+auto make_handle(const std::string& url, web::curl_share& share) -> web::curl_easy*
 {
     web::curl_easy* easy = new web::curl_easy();
     /* Important: use HTTP2 over HTTPS */
@@ -84,11 +82,14 @@ auto make_handle(const std::string& url) -> web::curl_easy*
     easy->setOption(CURLOPT_UNRESTRICTED_AUTH, 1L);
     easy->setOption(CURLOPT_PROXYAUTH, CURLAUTH_ANY);
     easy->setOption(CURLOPT_EXPECT_100_TIMEOUT_MS, 0L);
+    /* share the same DNS cache */
+    // easy->setOption(CURLOPT_SHARE, share.getHandle());
+    // easy->setOption(CURLOPT_DNS_CACHE_TIMEOUT, 60L);
     return easy;
 }
 
 /* HREF finder implemented in libxml2 but could be any HTML parser */
-size_t follow_links(web::curl_multi& multi, std::string* mem, char* url)
+size_t follow_links(web::curl_multi& multi, web::curl_share& share, std::string* mem, char* url)
 {
     int opts = HTML_PARSE_NOBLANKS | HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING | HTML_PARSE_NONET;
     htmlDocPtr doc = htmlReadMemory(mem->c_str(), mem->length(), url, NULL, opts);
@@ -122,7 +123,7 @@ size_t follow_links(web::curl_multi& multi, std::string* mem, char* url)
             continue;
         if (!strncmp(link, "http://", 7) || !strncmp(link, "https://", 8)) {
             // curl_multi_add_handle(multi_handle, make_handle(link));
-            multi.addHandle(make_handle(link));
+            multi.addHandle(make_handle(link, share));
             if (count++ == max_link_per_page)
                 break;
         }
@@ -151,7 +152,9 @@ int main()
     signal(SIGINT, sighandler);
     LIBXML_TEST_VERSION;
     web::curl_global::global_init();
-    auto multi = web::curl_multi();
+    auto multi = web::make_curl_multi();
+    auto share = web::make_curl_share(
+        CURLSHOPT_SHARE, CURL_LOCK_DATA_COOKIE, CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS);
     multi.setOption(CURLMOPT_MAX_TOTAL_CONNECTIONS, max_con);
     multi.setOption(CURLMOPT_MAX_HOST_CONNECTIONS, 6L);
 
@@ -164,7 +167,7 @@ int main()
     gettimeofday(&start, NULL);
     /* sets html start page */
     for (int i = 0; i < sizeof(start_page) / sizeof(start_page[0]); ++i)
-        multi.addHandle(make_handle(start_page[i]));
+        multi.addHandle(make_handle(start_page[i], share));
 
     int msgs_left = 0;
     int pending = 0;
@@ -193,7 +196,7 @@ int main()
                         webfile << fmt::format("[{}] HTTP 200 ({}): {}\n", complete, ctype, url);
                         if (is_html(ctype) && mem->length() > 100) {
                             if (pending < max_requests && (complete + pending) < max_total) {
-                                pending += follow_links(multi, mem, url);
+                                pending += follow_links(multi, share, mem, url);
                                 multi.add_easy_extant();
                             }
                         }

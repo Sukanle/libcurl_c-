@@ -31,21 +31,8 @@ namespace web {
 
 using curl_option = std::vector<std::pair<CURLoption, OptionValue>>;
 using curlm_option = std::vector<std::pair<CURLMoption, OptionValue>>;
+using curlsh_option = std::vector<std::pair<CURLSHoption, OptionValue>>;
 using curl_info_opt = std::vector<std::pair<CURLINFO, OptionValue>>;
-
-class lock_guard {
-private:
-    std::atomic_flag& _lock;
-
-public:
-    explicit lock_guard(std::atomic_flag& lock) noexcept
-        : _lock(lock)
-    {
-        while (_lock.test_and_set(std::memory_order_acquire))
-            ;
-    }
-    ~lock_guard() noexcept { _lock.clear(std::memory_order_release); }
-};
 
 NODISCARD auto getEasyOption(CURLoption id) noexcept -> const struct curl_easyoption*;
 NODISCARD auto getEasyOption(const char* name) noexcept -> const struct curl_easyoption*;
@@ -61,11 +48,26 @@ void curl_forced_cleanup(curl_t& curl)
     curl.cleanup();
     curl.~curl_t();
 }
+
+class auto_flag {
+private:
+    std::atomic_flag& _flag;
+public:
+    auto_flag(std::atomic_flag& flag) noexcept : _flag(flag)
+    {
+        while (_flag.test_and_set(std::memory_order_acquire))
+            ;
+    }
+    ~auto_flag() noexcept
+    {
+        _flag.clear(std::memory_order_release);
+    }
+};
 }// namespace web
 
 #include "curl_easy.h"
 #include "curl_multi.h"
-//
+#include "curl_share.h"
 // 工厂函数头文件，支持C++11及以上版本
 #include "curl_makefn.h"
 
@@ -74,6 +76,8 @@ namespace web {
 class curl_global {
 private:
     static CURLcode _global;
+    static std::atomic_flag _lock;
+
     friend class curl_easy;
     friend class curl_multi;
 

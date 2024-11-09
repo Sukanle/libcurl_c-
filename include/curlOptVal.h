@@ -12,7 +12,7 @@ namespace web{
         fd_except
     };
 
-
+    // curl_easy and curl_multi
     using curl_wr_h_callback = size_t(*)(char*,size_t,size_t,void*);// write read header
     using curl_pg_callback_v4l = int(*)(void*,curl_off_t,curl_off_t,curl_off_t,curl_off_t);
     using curl_pg_callback_v4d = int(*)(void*,double,double,double,double);
@@ -37,6 +37,9 @@ namespace web{
     using curl_push_callback = int(*)(CURL*,CURL*,size_t,struct curl_pushheaders*,void*);
     using curl_socket_callback = int(*)(CURL*,curl_socket_t,int,void*,void*);
     using curl_timer_callback = int(*)(CURL*,int64_t,void*);
+    // curl_share
+    using curl_lock_callback = void(*)(CURL*,curl_lock_data,curl_lock_access,void*);
+    using curl_unlock_callback = void(*)(CURL*,curl_lock_data,void*);
 
     union OptionValue{
         void *_pointer; // CURL*,CURLSH
@@ -73,6 +76,8 @@ namespace web{
         curl_push_callback _push_callback;
         curl_socket_callback _socket_callback;
         curl_timer_callback _timer_callback;
+        curl_lock_data _lock_data;
+        curl_lock_callback _lock_callback;
 
         FILE *_stream;
         curl_mime *_mime;
@@ -119,6 +124,8 @@ namespace web{
         explicit OptionValue(curl_push_callback fn):_push_callback(fn){}
         explicit OptionValue(curl_socket_callback fn):_socket_callback(fn){}
         explicit OptionValue(curl_timer_callback fn):_timer_callback(fn){}
+        explicit OptionValue(curl_lock_data data):_lock_data(data){}
+        explicit OptionValue(curl_lock_callback fn):_lock_callback(fn){}
 
         explicit OptionValue(FILE *f):_stream(f){}
         explicit OptionValue(curl_mime *mime):_mime(mime){}

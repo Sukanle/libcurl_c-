@@ -57,7 +57,6 @@ set(LIB_DIR_STATIC ${LIB_OUT}/static)
 file(GLOB SOURCES "./src/*.cpp")
 
 add_library(curlc++ SHARED ${SOURCES})
-# target_link_libraries(curlc++ LIBCURL::libcurl)
 set_target_properties(curlc++ PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${LIB_DIR_SHARED})
 
 file(GLOB CRAWLER ${CMAKE_SOURCE_DIR}/test/crawler.cpp)

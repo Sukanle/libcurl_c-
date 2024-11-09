@@ -184,7 +184,7 @@ NODISCARD auto make_curl_multi() -> RETURN_T(curl_multi, new_instance)
  * @attention: 如果new_instance为true，会创建一个新的curl_multi对象，否则返回一个栈上的对象
  * */
 template <bool new_instance = false>
-NODISCARD auto make_curl_multi(curl_option& options) -> RETURN_T(curl_multi, new_instance)
+NODISCARD auto make_curl_multi(curlm_option& options) -> RETURN_T(curl_multi, new_instance)
 {
     return make_curl<new_instance, curl_multi>(options);
 }
@@ -201,6 +201,41 @@ NODISCARD auto make_curl_multi(
 {
     return make_curl<new_instance, curl_multi>(
         std::forward<CURLoption>(option), std::forward<val_t>(value), std::forward<Args>(args)...);
+}
+/*======================================curl_share======================================*/
+/*
+ * @brief: 构造一个curl_share对象
+ * @param: new_instance: 是否创建一个新的curl_share对象，默认为false
+ * @attention: 如果new_instance为true，会创建一个新的curl_share对象，否则返回一个栈上的对象
+ * */
+template <bool new_instance = false>
+NODISCARD auto make_curl_share() -> RETURN_T(curl_share, new_instance)
+{
+    return make_curl<new_instance, curl_share>();
+}
+/*
+ * @brief: 构造一个curl_share对象，并设置选项
+ * @param: option: 选项组，里面包含了选项和值
+ * @param: new_instance: 是否创建一个新的curl_share对象，默认为false
+ * @attention: 如果new_instance为true，会创建一个新的curl_share对象，否则返回一个栈上的对象
+ * */
+template <bool new_instance = false>
+NODISCARD auto make_curl_share(curlsh_option& options) -> RETURN_T(curl_share, new_instance)
+{
+    return make_curl<new_instance, curl_share>(options);
+}
+/*
+ * @brief: 构造一个curl_share对象，并设置选项（可变参数模板）
+ * @param: option: 选项
+ * @param: value: 选项值
+ * @attention: 如果new_instance为true，会创建一个新的curl_share对象，否则返回一个栈上的对象
+ * */
+template <bool new_instance = false, typename val_t, typename... Args>
+NODISCARD auto make_curl_share(
+    CURLSHoption&& option, val_t&& value, Args&&... args) -> RETURN_T(curl_share, new_instance)
+{
+    return make_curl<new_instance, curl_share>(
+        std::forward<CURLSHoption>(option), std::forward<val_t>(value), std::forward<Args>(args)...);
 }
 } // namespace web
 #endif // _CURL_MAKEFN_H
